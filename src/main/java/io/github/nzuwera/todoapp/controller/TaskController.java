@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-
 @RestController
 @RequestMapping("/tasks")
 @RequiredArgsConstructor
@@ -25,8 +23,10 @@ public class TaskController {
     }
 
     /**
+     * GET /tasks/stream
      * Streams Tasks as Server‑Sent Events (SSE). Clients will see one JSON
      * Task roughly every second.
+     * @return Flux<Task>
      */
     @GetMapping(value = "/stream",
             produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -35,10 +35,10 @@ public class TaskController {
     }
 
     /**
-     * GET /tasks?page=0&size=3
-     *
-     * page: zero‐based page index
-     * size: number of items per page
+     * GET /tasks?page=0&size=3. Returns a Flux<Task> for the given page and size.
+     * @param page zero‐based page index
+     * @param size number of items per page
+     * @return Flux<Task>
      */
     @GetMapping("/page")
     public Flux<Task> getTasks(

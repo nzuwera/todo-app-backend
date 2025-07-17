@@ -22,7 +22,7 @@ public class TaskService {
                 .fromIterable(backlog)
                 .parallel()
                 .runOn(Schedulers.parallel())
-                .map(task -> {return task;})
+                .map(task -> task)
                 .sequential()
                 .delayElements(Duration.ofSeconds(1));
     }
