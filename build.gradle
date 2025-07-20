@@ -30,6 +30,8 @@ dependencies {
     implementation 'org.flywaydb:flyway-core:11.9.0'
     implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-webflux-ui
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.8'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.projectlombok:lombok'

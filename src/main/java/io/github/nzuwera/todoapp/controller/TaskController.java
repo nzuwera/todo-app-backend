@@ -2,6 +2,7 @@ package io.github.nzuwera.todoapp.controller;
 
 import io.github.nzuwera.todoapp.model.Task;
 import io.github.nzuwera.todoapp.service.TaskService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +31,7 @@ public class TaskController {
      */
     @GetMapping(value = "/stream",
             produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @Operation(summary = "Get all tasks", description = "Returns a list of tasks with optional pagination")
     public Flux<Task> streamTasks() {
         return taskService.streamAllTasks();
     }
