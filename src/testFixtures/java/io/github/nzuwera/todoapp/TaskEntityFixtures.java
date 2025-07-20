@@ -4,7 +4,6 @@ package io.github.nzuwera.todoapp;
 import io.github.nzuwera.todoapp.entity.TaskEntity;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class TaskEntityFixtures {

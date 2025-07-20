@@ -6,7 +6,6 @@ import io.github.nzuwera.todoapp.config.WebTestClientConfig;
 import io.github.nzuwera.todoapp.model.Task;
 import io.github.nzuwera.todoapp.repository.TaskRepository;
 import io.github.nzuwera.todoapp.service.ITaskService;
-import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
