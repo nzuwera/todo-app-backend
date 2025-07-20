@@ -1,40 +1,62 @@
 package io.github.nzuwera.todoapp.service;
 
+import io.github.nzuwera.todoapp.repository.TaskRepository;
+import io.github.nzuwera.todoapp.entity.TaskEntity;
 import io.github.nzuwera.todoapp.model.Task;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
+import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-import java.util.List;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
-public class TaskService {
-    private final List<Task> backlog;
+public class TaskService implements ITaskService {
+    private final TaskRepository taskRepository;
 
-    /**
-     * Emits one Task every second, then completes.
-     */
-    public Flux<Task> streamAllTasks() {
-        return Flux
-                .fromIterable(backlog)
-                .parallel()
-                .runOn(Schedulers.parallel())
-                .map(task -> task)
-                .sequential()
-                .delayElements(Duration.ofSeconds(1));
+    private static Task mapToTask(TaskEntity entity) {
+        Task newTask = new Task();
+        newTask.setId(entity.getId().toString());
+        newTask.setDescription(entity.getDescription());
+        newTask.setCompleted(entity.isCompleted());
+        newTask.setCreatedAt(entity.getCreatedAt().toString());
+        newTask.setUpdatedAt(entity.getUpdatedAt().toString());
+        return newTask;
     }
 
+    @Override
+    public Flux<Task> getTasks() {
+        return taskRepository.findAll().map(TaskService::mapToTask);
+    }
 
-    /**
-     * Returns a Flux<Task> for the given page and size.
-     */
-    public Flux<Task> findTasks(int page, int size) {
-        return Flux.fromIterable(backlog)
-                .skip((long) page * size)
-                .take(size);
+    @Override
+    public Mono<Task> createTask(Task task) {
+        return checkTaskExists(task.getDescription())
+                .then(Mono.defer(() -> saveNewTask(task)));
+    }
+
+    private Mono<Void> checkTaskExists(String description) {
+        return taskRepository.findByDescription(description)
+                .flatMap(existingTask -> Mono.error(
+                        new IllegalArgumentException("Task with this description already exists")
+                ))
+                .then();
+    }
+
+    private Mono<Task> saveNewTask(Task task) {
+        TaskEntity taskEntity = mapToTaskEntity(task);
+        return taskRepository.save(taskEntity)
+                .map(TaskService::mapToTask);
+    }
+
+    private static TaskEntity mapToTaskEntity(Task task) {
+        TaskEntity taskEntity = new TaskEntity();
+        taskEntity.setDescription(task.getDescription());
+        taskEntity.setCompleted(task.isCompleted());
+        taskEntity.setUpdatedAt(Instant.parse(task.getUpdatedAt()));
+        taskEntity.setCreatedAt(Instant.parse(task.getCreatedAt()));
+        return taskEntity;
     }
 }
 

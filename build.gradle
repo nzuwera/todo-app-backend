@@ -2,16 +2,37 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.3'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'java-test-fixtures'
+    id 'idea'  // Add this line
+
 }
 
 group = 'io.github.nzuwera'
-version = '0.0.1-SNAPSHOT'
+version = '0.2.0-SNAPSHOT'
 
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
 }
+
+sourceSets {
+    integrationTest {
+        java.srcDir file('src/integrationTest/java')
+        resources.srcDir file('src/integrationTest/resources')
+        compileClasspath += sourceSets.main.output + configurations.testRuntimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
 
 configurations {
     compileOnly {
@@ -26,21 +47,67 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+    implementation 'io.r2dbc:r2dbc-pool'
+    // https://mvnrepository.com/artifact/org.postgresql/r2dbc-postgresql
+    implementation 'org.postgresql:r2dbc-postgresql:1.0.7.RELEASE'
     implementation 'org.flywaydb:flyway-core:11.9.0'
     implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
     // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-webflux-ui
-    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.8'
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.9'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.projectlombok:lombok'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
+    testImplementation testFixtures(project(':'))
+
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'io.projectreactor:reactor-test'
+    integrationTestImplementation testFixtures(project(':'))
+    integrationTestImplementation platform('org.testcontainers:testcontainers-bom:1.19.7')
+    integrationTestImplementation 'org.testcontainers:testcontainers'
+    integrationTestImplementation 'org.testcontainers:junit-jupiter'
+    integrationTestImplementation 'org.testcontainers:postgresql'
+    integrationTestImplementation 'org.testcontainers:r2dbc'
+    integrationTestCompileOnly 'org.projectlombok:lombok'
+    integrationTestAnnotationProcessor 'org.projectlombok:lombok'
+
     runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'org.postgresql:r2dbc-postgresql'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+}
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests.'
+    group = 'verification'
+
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    useJUnitPlatform()
+    // This ensures integration tests run after unit tests
+    shouldRunAfter test
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
+tasks.withType(Copy).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+check {
+    dependsOn integrationTest
+}
+
+// Mark integration test source set as tests in IDEA
+idea {
+    module {
+        testSourceDirs += sourceSets.integrationTest.java.srcDirs
+        testSourceDirs += sourceSets.integrationTest.resources.srcDirs
+    }
+}
+
