@@ -1,6 +1,8 @@
 package io.github.nzuwera.todoapp.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.CreatedDate;
@@ -15,6 +17,8 @@ import java.util.UUID;
 @Table(name = "tasks")
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class TaskEntity {
     @Id
     private UUID id;
