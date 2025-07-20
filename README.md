@@ -66,9 +66,11 @@ The application will start on port 8080 by default.
 The application uses environment variables for configuration. These are loaded from the `.env` file in the project root:
 
 ```properties
-DATASOURCE_URL=jdbc:postgresql://localhost:5432/<DB_NAME>
-DATASOURCE_USERNAME=<DB_APP_USERNAME>
-DATASOURCE_PASSWORD=<DB_APP_PASSWORD>
+POSTGRES_HOST=<DB_HOST>
+POSTGRES_PORT=<DB_PORT>
+POSTGRES_DB=<DB_NAME>
+POSTGRES_USER=<DB_APP_USERNAME>
+POSTGRES_PASSWORD=<DB_APP_PASSWORD>
 ```
 
 Database credentials for Docker containers are in `docker-compose/.env`:

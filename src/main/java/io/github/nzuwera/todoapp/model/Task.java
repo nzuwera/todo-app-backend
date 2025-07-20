@@ -12,4 +12,7 @@ import lombok.Setter;
 public class Task {
     private String id;
     private String description;
+    private boolean completed;
+    private String createdAt;
+    private String updatedAt;
 }

@@ -38,4 +38,5 @@ out/
 
 ### Env Files ###
 .env*
+!.env.template
 docker-compose/pg_data/
