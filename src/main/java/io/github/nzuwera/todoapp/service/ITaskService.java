@@ -9,4 +9,8 @@ public interface ITaskService {
     Flux<Task> getTasks();
 
     Mono<Task> createTask(@Valid Task task);
+
+    Mono<Task> updateTask(String taskId, Task task);
+
+    Mono<Void> deleteTask(String taskId);
 }

@@ -1,0 +1,9 @@
+# Release configuration for the CI/CD workflow
+# This file can be used to configure the release and deployment behavior
+
+# Whether to automatically create a release when a non-SNAPSHOT version is pushed to main
+auto_release: true
+
+# Whether to automatically deploy when a release is created
+# Set to false by default - use manual workflow trigger for deployment
+auto_deploy: false

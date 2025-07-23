@@ -8,7 +8,7 @@ plugins {
 }
 
 group = 'io.github.nzuwera'
-version = '0.2.0-SNAPSHOT'
+version = '0.3.0-SNAPSHOT'
 
 java {
     toolchain {
@@ -110,4 +110,19 @@ idea {
         testSourceDirs += sourceSets.integrationTest.resources.srcDirs
     }
 }
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': project.name,
+                'Implementation-Version': project.version
+    }
+}
+
+tasks.register('printVersion') {
+    group 'versioning'
+    doLast {
+        println project.version
+    }
+}
+
 

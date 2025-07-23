@@ -115,6 +115,101 @@ You can access the PostgreSQL database using pgAdmin:
 
 This will create a JAR file in the `build/libs` directory.
 
+## CI/CD Workflow
+
+This project uses a comprehensive GitHub Actions workflow for continuous integration and continuous deployment.
+
+### Workflow Overview
+
+```mermaid
+graph TD
+    A[Feature Branch] -->|Create PR| B[Version Check]
+    B -->|Version Valid| C[Build & Test]
+    B -->|Version Invalid| Z[Fail]
+    C -->|Tests Pass| D[Build Docker Image]
+    C -->|Tests Fail| Z
+    D --> E[Push to DockerHub]
+    E -->|On Main & Release Version| F[Create Release]
+    E -->|Manual Trigger| F
+    F -->|On Main & Release Version| G[Deploy to Docker Swarm]
+    F -->|Manual Trigger| G
+```
+
+### Version Management
+
+#### Version Format
+- Production releases: `1.0.2` (in build.gradle: `version = '1.0.2'`)
+- Development releases: `1.0.2-SNAPSHOT` (in build.gradle: `version = '1.0.2-SNAPSHOT'`)
+
+#### Versioning Rules
+1. When creating a new feature branch, increment the version in `build.gradle` according to semantic versioning:
+   - Major version (x.0.0): Breaking changes
+   - Minor version (0.x.0): New features, backward compatible
+   - Patch version (0.0.x): Bug fixes, backward compatible
+2. Always use `-SNAPSHOT` suffix for development work
+3. Remove `-SNAPSHOT` suffix when ready for production release
+
+#### Version Control
+- The workflow automatically checks if the PR version is greater than the main branch version
+- SNAPSHOT versions will build and test, but won't automatically release or deploy
+- Non-SNAPSHOT versions will automatically trigger releases and deployments when merged to main
+
+### Manual Workflow Control
+
+You can manually trigger the workflow with different options:
+
+1. **build-only**: Only build and test the application
+2. **build-and-release**: Build, test, and create a GitHub release
+3. **build-release-deploy**: Build, test, create a GitHub release, and deploy to Docker Swarm
+
+### Required Secrets
+
+Add these secrets to your GitHub repository:
+
+- `DOCKERHUB_USERNAME`: Your DockerHub username
+- `DOCKERHUB_TOKEN`: Your DockerHub access token
+- `SSH_PRIVATE_KEY`: SSH key for Docker Swarm deployment (if using SSH)
+
+### Development Workflow
+
+1. **Create Feature Branch**:
+   ```bash
+   git checkout -b feature/new-feature
+   ```
+
+2. **Update Version in build.gradle**:
+   ```gradle
+   version = '0.3.1-SNAPSHOT'  # Increment from previous version
+   ```
+
+3. **Make Changes and Commit**:
+   ```bash
+   git add .
+   git commit -m "Implement new feature"
+   ```
+
+4. **Push Changes**:
+   ```bash
+   git push origin feature/new-feature
+   ```
+
+5. **Create Pull Request**:
+   - GitHub Actions will automatically:
+     - Check if your version is greater than the main branch version
+     - Run unit and integration tests separately
+     - Build the application
+
+6. **Review and Merge**:
+   - After PR is approved and merged to main:
+     - The workflow will build a Docker image
+     - Push it to DockerHub
+     - If it's a non-SNAPSHOT version, create a GitHub release and deploy
+
+7. **For Production Release**:
+   - Update version in main branch, removing `-SNAPSHOT` suffix
+   - Push directly to main or via PR
+   - The workflow will create a production release and deploy
+
 ## License
 
 This project is licensed under the MIT License.
