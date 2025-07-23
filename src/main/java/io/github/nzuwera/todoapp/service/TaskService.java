@@ -9,6 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +35,25 @@ public class TaskService implements ITaskService {
     public Mono<Task> createTask(Task task) {
         return checkTaskExists(task.getDescription())
                 .then(Mono.defer(() -> saveNewTask(task)));
+    }
+
+    @Override
+    public Mono<Task> updateTask(String taskId, Task task) {
+        return taskRepository.findById(UUID.fromString(taskId))
+                .flatMap(existingTask -> {
+                    existingTask.setDescription(task.getDescription());
+                    existingTask.setCompleted(task.isCompleted());
+                    existingTask.setUpdatedAt(Instant.now());
+                    return taskRepository.save(existingTask);
+                })
+                .map(TaskService::mapToTask);
+    }
+
+    @Override
+    public Mono<Void> deleteTask(String taskId) {
+        return taskRepository.findById(UUID.fromString(taskId))
+                .flatMap(existingTask -> taskRepository.delete(existingTask))
+                .then();
     }
 
     private Mono<Void> checkTaskExists(String description) {
