@@ -27,42 +27,45 @@ jobs:
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v3
-        
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
-          
+
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-        
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Get PR branch version
         id: pr-version
         run: |
           PR_VERSION=$(./gradlew -q printVersion)
           echo "PR_VERSION=$PR_VERSION" >> $GITHUB_ENV
           echo "PR branch version: $PR_VERSION"
-      
+
       - name: Checkout main branch
         uses: actions/checkout@v3
         with:
           ref: main
-      
+
       - name: Get main branch version
         id: main-version
         run: |
           MAIN_VERSION=$(./gradlew -q printVersion)
           echo "MAIN_VERSION=$MAIN_VERSION" >> $GITHUB_ENV
           echo "Main branch version: $MAIN_VERSION"
-      
+
       - name: Check semantic versioning
         id: check-version
         run: |
           # Remove -SNAPSHOT suffix for comparison
           PR_VERSION_CLEAN=$(echo $PR_VERSION | sed 's/-SNAPSHOT//')
           MAIN_VERSION_CLEAN=$(echo $MAIN_VERSION | sed 's/-SNAPSHOT//')
-          
+
           # Compare versions using semver logic
           if [ "$(printf '%s\n' "$MAIN_VERSION_CLEAN" "$PR_VERSION_CLEAN" | sort -V | head -n1)" = "$MAIN_VERSION_CLEAN" ] && [ "$MAIN_VERSION_CLEAN" != "$PR_VERSION_CLEAN" ]; then
             echo "Version check passed: $PR_VERSION > $MAIN_VERSION"
@@ -79,16 +82,19 @@ jobs:
       is_release_version: ${{ steps.check-version.outputs.is_release_version }}
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
-          
+
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-        
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - id: check-version
         run: |
           VERSION=$(./gradlew -q printVersion)
@@ -107,19 +113,22 @@ jobs:
     if: github.event_name != 'pull_request' || needs.version-check.outputs.is_valid_version == 'true'
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
-          
+
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-        
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Build with Gradle
         run: ./gradlew build -x test -x integrationTest
-        
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -131,19 +140,22 @@ jobs:
     needs: [build]
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
-          
+
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-        
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Run unit tests
         run: ./gradlew test
-        
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v3
@@ -168,22 +180,25 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
-          
+
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-        
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Run integration tests
         run: ./gradlew integrationTest
-        
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v3
@@ -196,29 +211,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Get version
         id: get-version
         run: |
           VERSION=$(./gradlew -q printVersion)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Version: $VERSION"
-      
+
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
           name: app-build
           path: build/libs
-      
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
@@ -231,7 +249,7 @@ jobs:
             APP_VERSION=${{ env.VERSION }}
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/todo-app:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/todo-app:buildcache,mode=max
-          
+
   release:
     needs: [build-docker, check-version-type]
     if: |
@@ -242,23 +260,26 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
-          
+
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-          
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Get version
         id: get-version
         run: |
           VERSION=$(./gradlew -q printVersion)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Release version: $VERSION"
-          
+
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
@@ -268,7 +289,7 @@ jobs:
           release_name: Release v${{ env.VERSION }}
           draft: false
           prerelease: ${{ contains(env.VERSION, 'SNAPSHOT') }}
-          
+
   deploy:
     needs: [release, check-version-type]
     if: |
@@ -277,22 +298,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
-          
+
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-        
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Get version
         id: get-version
         run: |
           VERSION=$(./gradlew -q printVersion)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          
+
       - name: Deploy to Docker Swarm
         run: |
           echo "Deploying version $VERSION to Docker Swarm"
@@ -300,7 +324,7 @@ jobs:
           # For example:
           # - SSH into your Docker Swarm manager
           # - Update the service with the new image
-          
+
           # Example (replace with actual deployment commands):
           # ssh -i ${{ secrets.SSH_PRIVATE_KEY }} user@swarm-manager \
           #   "export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }} && \
